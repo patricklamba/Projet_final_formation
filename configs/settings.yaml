@@ -1,7 +1,14 @@
-bb_period: 20
-bb_std: 2
-kc_period: 20
-kc_mult: 1.5
-killzone:
-  start: "03:00"
-  end: "06:30"
+ai:
+  provider: "openai"  # openai, deepseek, claude
+  api_key: ""  # ou utiliser variable d'environnement AI_API_KEY
+  models:
+    openai: "gpt-4"
+    deepseek: "deepseek-chat" 
+    claude: "claude-3-sonnet-20240229"
+  
+  # Paramètres d'analyse
+  analysis:
+    enable: true
+    confidence_threshold: 70
+    max_tokens: 1000
+    temperature: 0.3
