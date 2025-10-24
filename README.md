@@ -133,3 +133,17 @@ Ce que cela fait :
     Affiche dans le terminal :
         Résumé de l'analyse fondamentale
         Confirmation si le trade est cohérent ou non
+
+6️⃣ Commandes résumées
+Action	Commande
+Cloner le projet	git clone <repo>
+Activer l’environnement	Windows: .venv\Scripts\activate
+Linux/Mac: source .venv/bin/activate
+Installer dépendances	pip install -r requirements.txt
+Backtest historique	python main.py
+Démo journalière (_demo)	python main_demo.py
+
+7️⃣ Conseils
+Pour tester un autre symbole, modifier la liste dans main.py ou main_demo.py
+Le module gpt_analyzer_trade_demo peut être remplacé par un vrai appel API GPT (Claude ou OpenAI)
+Les résultats du backtest sont sauvegardés dans data/results_*.csv
