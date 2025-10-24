@@ -1,0 +1,7 @@
+bb_period: 20
+bb_std: 2
+kc_period: 20
+kc_mult: 1.5
+killzone:
+  start: "03:00"
+  end: "06:30"
