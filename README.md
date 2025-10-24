@@ -32,12 +32,30 @@ Ce projet sert de **base** pour :
 
 ---
 
-## 🚀 Installation
+# Projet Final Python – Stratégie BB + Keltner + GPT
 
-### 1️⃣ Cloner le dépôt
+Ce projet contient deux modes :
+
+1. **Backtest historique** sur CSV  
+2. **Démo journalière** avec analyse fondamentale + confirmation GPT  
+
+---
+
+## 1️⃣ Prérequis
+
+- Python 3.11+  
+- Git  
+- Connexion Internet (pour scraping et GPT)  
+
+---
+
+## 2️⃣ Cloner le projet
 
 ```bash
-git clone https://github.com/<TON_USER>/Projet_final_formation.git
+git clone https://github.com/<votre_user>/Projet_final_formation.git
 cd Projet_final_formation
+
+
+
 
 
