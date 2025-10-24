@@ -1,21 +1,42 @@
-from core.strategy import BBKeltnerStrategy
-from core.backtester import Backtester
-from utils.file_manager import FileManager
+"""
+main.py
+--------
+Point d'entrée du projet : charge les données, exécute la stratégie
+et affiche les résultats.
+"""
 
-def main():
-    print("=== Backtest BB + Keltner (Killzone 03h00–06h30) ===")
-    data_path = "data/XAUUSD_15m.csv"  # à placer manuellement dans /data
+from core.strategy import BBKeltnerStrategy
+from utils.file_manager import FileManager
+import pandas as pd
+
+def run_strategy(symbol: str):
+    print(f"\n🚀 Exécution de la stratégie pour {symbol}...")
+
+    # 1️⃣ Charger les données
+    fm = FileManager(data_dir="data")
     try:
-        df = FileManager.load_csv(data_path)
-    except FileNotFoundError:
-        print("⚠️ Données non trouvées. Placez un fichier CSV OHLC dans /data/")
+        df = fm.load_csv(symbol)
+        print(f"✅ Données chargées : {len(df)} lignes")
+    except Exception as e:
+        print(f"❌ Erreur lors du chargement des données : {e}")
         return
 
-    strat = BBKeltnerStrategy()
-    backtester = Backtester(df, strat)
-    results = backtester.run()
+    # 2️⃣ Créer et exécuter la stratégie
+    strategy = BBKeltnerStrategy(data=df)
+    result = strategy.run()
 
-    print("Résultats du backtest :", results)
+    # 3️⃣ Résumé
+    print(f"\n📊 Résumé des signaux détectés ({symbol}) :")
+    print(result.tail(5))
+
+    # 4️⃣ Sauvegarde des résultats (optionnel)
+    output_path = f"data/results_{symbol}.csv"
+    result.to_csv(output_path)
+    print(f"💾 Résultats enregistrés dans {output_path}")
 
 if __name__ == "__main__":
-    main()
+    # Tu peux tester sur une ou plusieurs paires :
+    for pair in ["XAUUSD", "EURUSD"]:
+        run_strategy(pair)
+
+    print("\n🎯 Exécution terminée avec succès.")
