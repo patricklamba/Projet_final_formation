@@ -1,5 +1,3 @@
-import pandas as pd
-
 class Backtester:
     """
     Simple backtester pour la stratégie BB+Keltner.
