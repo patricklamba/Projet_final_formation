@@ -19,3 +19,25 @@ Ce projet sert de **base** pour :
 
 ## 🧱 Architecture du projet
 
+
+---
+
+## ⚙️ Fonctionnalités
+
+- 🧠 **Stratégie de convergence Bollinger + Keltner**
+- ⏰ **Killzone filtrée** : ne trade qu’entre 03h00 et 06h30
+- 🧩 **Architecture modulaire** (extensible pour d’autres stratégies)
+- 💾 **Lecture automatique** de fichiers CSV (OHLC)
+- 📊 **Backtest rapide** avec affichage des signaux générés
+
+---
+
+## 🚀 Installation
+
+### 1️⃣ Cloner le dépôt
+
+```bash
+git clone https://github.com/<TON_USER>/Projet_final_formation.git
+cd Projet_final_formation
+
+
