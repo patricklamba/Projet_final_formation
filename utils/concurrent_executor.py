@@ -10,14 +10,16 @@ from utils.file_manager import FileManager
 
 class ConcurrentExecutor:
     """
-    Exécuteur concurrentiel avec visualisation en temps réel
+    Exécuteur concurrentiel avec démo visuelle des trades
     """
     
-    def __init__(self, data_dir="data"):
+    def __init__(self, data_dir="data", demo_mode: bool = True, max_demo_trades: int = 5):
         self.data_dir = data_dir
-        self.file_activity = {}  # Suivi de l'activité des fichiers
-        self.lock = threading.Lock()  # Pour la synchronisation
-        
+        self.file_activity = {}
+        self.lock = threading.Lock()
+        self.demo_mode = demo_mode  # Mode démo activé
+        self.max_demo_trades = max_demo_trades  # Nombre de trades à afficher
+    
     def _log_file_activity(self, symbol: str, action: str, details: str = ""):
         """Journalise l'activité des fichiers en temps réel"""
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -32,7 +34,7 @@ class ConcurrentExecutor:
     def _display_activity(self):
         """Affiche l'activité en temps réel dans la console"""
         os.system('cls' if os.name == 'nt' else 'clear')
-        print("🔄 ACTIVITÉ DES FICHIERS EN TEMPS RÉEL")
+        print("🔄 ACTIVITÉ DES FICHIERS EN TEMPS RÉEL - MODE DÉMO")
         print("=" * 60)
         
         for symbol, activity in self.file_activity.items():
@@ -41,9 +43,45 @@ class ConcurrentExecutor:
             print(f"   ⏰ {activity['timestamp']} | {activity['details']}")
         print("-" * 60)
 
+    async def _display_trade_demo(self, symbol: str, trades: List[Dict], total_trades: int):
+        """
+        Affiche une démo visuelle des premiers trades
+        """
+        if not self.demo_mode or not trades:
+            return
+            
+        print(f"\n🎯 DÉMO DES TRADES - {symbol}")
+        print("=" * 50)
+        print(f"📊 Total des trades générés: {total_trades}")
+        print(f"🎭 Affichage des {min(self.max_demo_trades, len(trades))} premiers trades...")
+        print("-" * 50)
+        
+        # Afficher les premiers trades un par un
+        demo_trades = trades[:self.max_demo_trades]
+        
+        for i, trade in enumerate(demo_trades, 1):
+            print(f"\n🔍 TRADE #{i}:")
+            print(f"   📅 Date: {trade['entry_time']}")
+            print(f"   🧭 Direction: {trade['direction']}")
+            print(f"   💰 Prix entrée: {trade['entry_price']:.4f}")
+            print(f"   🛑 Stop Loss: {trade['stop_loss']:.4f}")
+            print(f"   🎯 Take Profit: {trade['take_profit']:.4f}")
+            print(f"   📊 Lots: {trade['lots']}")
+            print(f"   ⚠️  Risk: {trade['risk_amount']:.2f}€")
+            print(f"   📈 Phase: {trade['phase']}")
+            
+            # Simulation d'attente pour l'effet démo
+            await asyncio.sleep(1.5)  # Augmente le temps pour mieux voir
+        
+        if len(trades) > self.max_demo_trades:
+            remaining = len(trades) - self.max_demo_trades
+            print(f"\n⏩ ... et {remaining} autres trades exécutés automatiquement")
+            print("🎬 Passage à l'exécution complète...")
+            await asyncio.sleep(2)
+
     async def run_single_strategy_async(self, symbol: str) -> Dict[str, Any]:
         """
-        Exécute une stratégie pour un symbol avec suivi visuel
+        Exécute une stratégie avec mode démo des trades
         """
         try:
             # 1️⃣ Ouverture du fichier
@@ -53,7 +91,7 @@ class ConcurrentExecutor:
             df = fm.load_csv(symbol)
             
             self._log_file_activity(symbol, "Fichier ouvert avec succès", f"{len(df)} lignes chargées")
-            await asyncio.sleep(0.5)  # Pause pour visualisation
+            await asyncio.sleep(0.5)
 
             # 2️⃣ Calcul des indicateurs
             self._log_file_activity(symbol, "Calcul des indicateurs", "Bollinger Bands + Keltner Channel")
@@ -69,15 +107,20 @@ class ConcurrentExecutor:
             
             closed_trades = strategy.execute_trading_strategy(df_signals)
             
+            # 4️⃣ AFFICHAGE DÉMO DES TRADES
+            if closed_trades:
+                await self._display_trade_demo(symbol, closed_trades, len(closed_trades))
+            
             self._log_file_activity(symbol, "Trades exécutés", f"{len(closed_trades)} trades fermés")
             await asyncio.sleep(0.5)
 
-            # 4️⃣ Génération du rapport
+            # 5️⃣ Génération du rapport
             self._log_file_activity(symbol, "Génération rapport", "Money management...")
             
             mm_report = strategy.generate_money_management_report(symbol)
+            mm_report['symbol'] = symbol  # Ajout du symbole pour l'affichage
             
-            # 5️⃣ Sauvegarde des résultats
+            # 6️⃣ Sauvegarde des résultats
             output_path = f"{self.data_dir}/results_{symbol}.csv"
             df_signals.to_csv(output_path)
             
@@ -88,7 +131,8 @@ class ConcurrentExecutor:
 
             self._log_file_activity(symbol, "✅ Analyse terminée", 
                                   f"Profit: {mm_report['money_management']['net_profit']:+.2f}€ | "
-                                  f"Fichiers: {os.path.basename(output_path)}, {os.path.basename(report_path)}")
+                                  f"Trades: {len(closed_trades)} | "
+                                  f"Win Rate: {mm_report['performance']['win_rate']}%")
 
             return mm_report
 
@@ -98,10 +142,11 @@ class ConcurrentExecutor:
 
     async def run_multiple_strategies_async(self, symbols: List[str]) -> List[Dict[str, Any]]:
         """
-        Exécute plusieurs stratégies en parallèle avec visualisation
+        Exécute plusieurs stratégies en parallèle avec démo
         """
-        print("🚀 LANCEMENT CONCURRENT DES STRATÉGIES")
+        print("🚀 LANCEMENT CONCURRENT DES STRATÉGIES - MODE DÉMO")
         print(f"📊 Symboles: {', '.join(symbols)}")
+        print(f"🎭 DÉMO: {self.max_demo_trades} premiers trades affichés par devise")
         print("=" * 60)
         
         # Initialisation du suivi
@@ -141,5 +186,4 @@ class ConcurrentExecutor:
         """
         Version adaptée pour le threading
         """
-        # Pour le threading, on utilise asyncio dans un thread séparé
         return asyncio.run(self.run_single_strategy_async(symbol))
