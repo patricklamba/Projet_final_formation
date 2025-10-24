@@ -51,9 +51,64 @@ Ce projet contient deux modes :
 
 ## 2️⃣ Cloner le projet
 
-```bash
 git clone https://github.com/<votre_user>/Projet_final_formation.git
 cd Projet_final_formation
+
+3️⃣ Créer l'environnement Python
+Windows :
+
+python -m venv .venv
+.venv\Scripts\activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
+
+Linux / Mac :
+
+^python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt^
+
+4️⃣ Backtest historique
+Le backtest utilise les CSV dans data/ pour XAUUSD et EURUSD.
+
+python main.py
+
+Ce que cela fait:
+Charge les données CSV (data/XAUUSD.csv, data/EURUSD.csv)
+Exécute la stratégie BB + Keltner
+Génère les signaux de trade
+Calcule le money management sur un compte fictif de 100 000 €
+Sauvegarde les résultats dans data/results_XAUUSD.csv et data/results_EURUSD.csv
+Les fichiers historiques ne sont pas modifiés et peuvent être remplacés si besoin.
+
+5️⃣ Démo journalière (_demo)
+
+Cette démo montre un trade hypothétique pour un jour spécifique avec confirmation GPT.
+
+Structure des fichiers démo :
+
+core/strategy_demo.py
+indicators/bollinger_bands_demo.py
+indicators/keltner_channel_demo.py
+utils/fundamental_scraper_demo.py
+utils/gpt_analyzer_trade_demo.py
+main_demo.py
+
+Lancer la démo
+python main_demo.py
+
+Ce que cela fait
+Scrape les données fondamentales du jour (annonces économiques)
+Définit un trade hypothétique (signal, entry, stop, TP)
+Envoie le trade + fondamentaux à GPT (gpt_analyzer_trade_demo)
+Affiche dans le terminal :
+Résumé de l’analyse fondamentale
+Confirmation si le trade est cohérent ou non
+
+
+
 
 
 
