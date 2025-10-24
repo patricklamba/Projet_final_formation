@@ -1,51 +1,46 @@
-"""
-File Manager Utility
---------------------
-Gère le chargement, la validation et la préparation des données CSV
-pour la stratégie de trading (XAUUSD, EURUSD, etc.)
-"""
-
-import os
 import pandas as pd
+import os
 
 class FileManager:
-    def __init__(self, data_dir: str = "data"):
-        """
-        Initialise le gestionnaire de fichiers.
-        :param data_dir: dossier contenant les CSV (par défaut 'data')
-        """
+    def __init__(self, data_dir="data"):
         self.data_dir = data_dir
 
     def load_csv(self, symbol: str) -> pd.DataFrame:
-        """
-        Charge un fichier CSV pour un symbole donné (ex: 'XAUUSD').
-        Vérifie que le fichier existe et que les colonnes sont correctes.
-        """
-        path = os.path.join(self.data_dir, f"{symbol}.csv")
+        path = f"{self.data_dir}/{symbol}.csv"
+        
+        # Vérifier l'existence du fichier
         if not os.path.exists(path):
-            raise FileNotFoundError(f"❌ Fichier introuvable : {path}")
+            raise FileNotFoundError(f"Fichier {path} introuvable")
+        
+        # Charger avec séparateur tabulation
+        df = pd.read_csv(path, sep='\t')
+        
+        # Nettoyage des colonnes
+        df.columns = [col.strip("<>").lower() for col in df.columns]
+        print(f"📊 Colonnes détectées: {list(df.columns)}")
 
-        try:
-            df = pd.read_csv(path)
-        except Exception as e:
-            raise RuntimeError(f"⚠️ Erreur lors du chargement du CSV : {e}")
+        # Vérification des colonnes obligatoires
+        required = {"open", "high", "low", "close"}
+        if not required.issubset(df.columns):
+            missing = required - set(df.columns)
+            raise ValueError(f"Colonnes manquantes: {missing}")
 
-        # Nettoyage et standardisation
-        df.columns = [col.lower() for col in df.columns]
-        expected_cols = {'open', 'high', 'low', 'close'}
-        if not expected_cols.issubset(df.columns):
-            raise ValueError(f"⚠️ Le CSV doit contenir les colonnes : {expected_cols}")
+        # Conversion en float
+        for col in required:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
 
-        # Si une colonne 'datetime' existe → la mettre en index
-        if 'datetime' in df.columns:
-            df['datetime'] = pd.to_datetime(df['datetime'])
-            df.set_index('datetime', inplace=True)
-        elif 'date' in df.columns:
-            df['date'] = pd.to_datetime(df['date'])
-            df.set_index('date', inplace=True)
+        # Supprimer les NaN
+        df.dropna(subset=required, inplace=True)
 
+        # Créer index datetime
+        if "date" in df.columns and "time" in df.columns:
+            df["datetime"] = pd.to_datetime(df["date"] + " " + df["time"])
+            df.set_index("datetime", inplace=True)
+            print(f"✅ Index datetime créé")
+        elif "date" in df.columns:
+            df["date"] = pd.to_datetime(df["date"])
+            df.set_index("date", inplace=True)
+            print(f"✅ Index date créé")
+
+        print(f"✅ Données chargées: {len(df)} lignes, {len(df.columns)} colonnes")
         return df
-
-    def list_data_files(self):
-        """Liste les fichiers CSV disponibles dans le dossier data."""
-        return [f for f in os.listdir(self.data_dir) if f.endswith(".csv")]
