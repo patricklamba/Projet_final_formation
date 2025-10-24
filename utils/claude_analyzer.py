@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 
 class ClaudeAnalyzer:
-    def __init__(self, api_key: str = "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"):
+    def __init__(self, api_key: str = "VOTRE_CLE_API"):
         self.api_key = api_key
         self.client = None
         self.setup_client()
