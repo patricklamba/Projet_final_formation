@@ -1,0 +1,57 @@
+{
+  "symbol": "XAUUSD",
+  "periode_analyse": "2024-01-02 to 2024-01-15",
+  "killzone": "03:00\u201306:30",
+  "performance": {
+    "total_trades": 3,
+    "winning_trades": 3,
+    "losing_trades": 0,
+    "win_rate": 100.0,
+    "avg_risk_reward": 1.5,
+    "total_risk": 11.33,
+    "total_reward": 16.99
+  },
+  "analyse_phases": {
+    "trades_contraction": 0,
+    "trades_expansion": 3,
+    "ratio_contraction_expansion": "0:3"
+  },
+  "trades_detailed": [
+    {
+      "entry_time": "2024-01-03 04:00:00",
+      "entry_price": 2064.0,
+      "direction": "LONG",
+      "stop_loss": 2060.142,
+      "take_profit": 2069.7870000000003,
+      "risk": 3.8580000000001746,
+      "reward": 5.787000000000262,
+      "rr_ratio": 1.5,
+      "position_size": 25.920165889060517,
+      "phase": "EXPANSION"
+    },
+    {
+      "entry_time": "2024-01-08 04:45:00",
+      "entry_price": 2041.26,
+      "direction": "SHORT",
+      "stop_loss": 2044.3934999999997,
+      "take_profit": 2036.5597500000003,
+      "risk": 3.1334999999996853,
+      "reward": 4.700249999999642,
+      "rr_ratio": 1.5,
+      "position_size": 31.91319610659328,
+      "phase": "EXPANSION"
+    },
+    {
+      "entry_time": "2024-01-11 04:00:00",
+      "entry_price": 2030.53,
+      "direction": "LONG",
+      "stop_loss": 2026.1924999999999,
+      "take_profit": 2037.03625,
+      "risk": 4.337500000000091,
+      "reward": 6.506250000000136,
+      "rr_ratio": 1.5,
+      "position_size": 23.054755043227182,
+      "phase": "EXPANSION"
+    }
+  ]
+}
