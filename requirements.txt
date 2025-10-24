@@ -1,6 +1,5 @@
-pandas
-numpy
-openai
-pyyaml
-requests
-beautifulsoup4
+pandas>=2.0.0
+numpy>=1.25.0
+matplotlib>=3.8.0
+yfinance>=0.2.36
+python-dateutil>=2.8.2

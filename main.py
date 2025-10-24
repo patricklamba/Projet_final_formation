@@ -1,13 +1,5 @@
-"""
-main.py
---------
-Point d'entrée du projet : charge les données, exécute la stratégie
-et affiche les résultats.
-"""
-
 from core.strategy import BBKeltnerStrategy
 from utils.file_manager import FileManager
-import pandas as pd
 
 def run_strategy(symbol: str):
     print(f"\n🚀 Exécution de la stratégie pour {symbol}...")
@@ -22,20 +14,19 @@ def run_strategy(symbol: str):
         return
 
     # 2️⃣ Créer et exécuter la stratégie
-    strategy = BBKeltnerStrategy(data=df)
-    result = strategy.run()
+    strategy = BBKeltnerStrategy()
+    df_signals = strategy.generate_signals(df)
 
     # 3️⃣ Résumé
-    print(f"\n📊 Résumé des signaux détectés ({symbol}) :")
-    print(result.tail(5))
+    summary = strategy.summary(df_signals)
+    print(f"\n📊 Résumé des signaux détectés ({symbol}) : {summary}")
 
-    # 4️⃣ Sauvegarde des résultats (optionnel)
+    # 4️⃣ Sauvegarde des résultats
     output_path = f"data/results_{symbol}.csv"
-    result.to_csv(output_path)
+    df_signals.to_csv(output_path)
     print(f"💾 Résultats enregistrés dans {output_path}")
 
 if __name__ == "__main__":
-    # Tu peux tester sur une ou plusieurs paires :
     for pair in ["XAUUSD", "EURUSD"]:
         run_strategy(pair)
 
