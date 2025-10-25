@@ -5,8 +5,9 @@ import time
 from typing import List, Dict, Any
 from datetime import datetime
 import os
-from core.strategy import BBKeltnerStrategy
+from core.strategy import MultiSignalStrategy
 from utils.file_manager import FileManager
+from utils.report_generator import ReportGenerator
 
 class ConcurrentExecutor:
     """
@@ -96,8 +97,8 @@ class ConcurrentExecutor:
             # 2️⃣ Calcul des indicateurs
             self._log_file_activity(symbol, "Calcul des indicateurs", "Bollinger Bands + Keltner Channel")
             
-            strategy = BBKeltnerStrategy()
-            df_signals = strategy.generate_trading_signals(df)
+            strategy = MultiSignalStrategy()
+            df_signals = strategy.apply_indicators(df)
             
             self._log_file_activity(symbol, "Indicateurs calculés", f"{len(df_signals)} signaux générés")
             await asyncio.sleep(0.5)
@@ -105,7 +106,7 @@ class ConcurrentExecutor:
             # 3️⃣ Exécution des trades
             self._log_file_activity(symbol, "Exécution des trades", "Money management en cours...")
             
-            closed_trades = strategy.execute_trading_strategy(df_signals)
+            closed_trades = strategy.execute_strategy(df_signals, symbol)
             
             # 4️⃣ AFFICHAGE DÉMO DES TRADES
             if closed_trades:
@@ -114,25 +115,52 @@ class ConcurrentExecutor:
             self._log_file_activity(symbol, "Trades exécutés", f"{len(closed_trades)} trades fermés")
             await asyncio.sleep(0.5)
 
-            # 5️⃣ Génération du rapport
-            self._log_file_activity(symbol, "Génération rapport", "Money management...")
-            
-            mm_report = strategy.generate_money_management_report(symbol)
-            mm_report['symbol'] = symbol  # Ajout du symbole pour l'affichage
-            
-            # 6️⃣ Sauvegarde des résultats
+           # 5️⃣ Génération du rapport
+            self._log_file_activity(symbol, "Génération rapport", "Performance...")
+
+            mm_report = strategy.generate_report(symbol)
+
+            # DEBUG: Vérifier la structure
+            print(f"🔧 DEBUG: Rapport keys = {list(mm_report.keys())}")
+
+            # 6️⃣ Affichage du rapport détaillé
+            try:
+                from utils.report_generator import ReportGenerator
+                formatted_report = ReportGenerator.format_report_for_display(mm_report)
+                print(formatted_report)
+            except Exception as e:
+                print(f"❌ Erreur affichage rapport: {e}")
+
+            # 7️⃣ Sauvegarde des résultats
             output_path = f"{self.data_dir}/results_{symbol}.csv"
             df_signals.to_csv(output_path)
-            
+
             report_path = f"{self.data_dir}/mm_report_{symbol}_{datetime.now().strftime('%Y%m%d_%H%M')}.json"
             import json
             with open(report_path, 'w', encoding='utf-8') as f:
                 json.dump(mm_report, f, indent=2, default=str)
 
-            self._log_file_activity(symbol, "✅ Analyse terminée", 
-                                  f"Profit: {mm_report['money_management']['net_profit']:+.2f}€ | "
-                                  f"Trades: {len(closed_trades)} | "
-                                  f"Win Rate: {mm_report['performance']['win_rate']}%")
+            # 8️⃣ Log final avec le NOUVEAU format
+            summary = mm_report.get('summary', {})
+            net_profit = summary.get('net_profit', 0)
+            gross_profit = summary.get('gross_profit', 0) 
+            gross_loss = summary.get('gross_loss', 0)
+
+            net_profit_str = f"+{net_profit:,.2f}€" if net_profit >= 0 else f"{net_profit:,.2f}€"
+            gross_profit_str = f"+{gross_profit:,.2f}€" if gross_profit >= 0 else f"{gross_profit:,.2f}€"
+            gross_loss_str = f"{gross_loss:,.2f}€"
+
+            log_message = f"""
+            💰 PROFIT NET TOTAL: {net_profit_str}
+            💹 GAINS BRUTS TOTAUX: {gross_profit_str}
+            📉 PERTES BRUTES TOTALES: {gross_loss_str}
+            📊 TOTAL TRADES: {summary.get('total_trades', 0)}
+            ✅ TRADES GAGNANTS: {summary.get('winning_trades', 0)}
+            ❌ TRADES PERDANTS: {summary.get('losing_trades', 0)}
+            🏆 WIN RATE GLOBAL: {summary.get('win_rate', 0)}%
+            """
+
+            self._log_file_activity(symbol, "✅ ANALYSE TERMINÉE", log_message)
 
             return mm_report
 

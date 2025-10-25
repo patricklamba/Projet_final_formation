@@ -1,0 +1,28 @@
+{
+  "symbol": "EURUSD",
+  "timestamp": "2025-10-25 15:18:32",
+  "summary": {
+    "net_profit": 162.38,
+    "gross_profit": 162.38,
+    "gross_loss": 0,
+    "total_trades": 1,
+    "winning_trades": 1,
+    "losing_trades": 0,
+    "breakeven_trades": 0,
+    "win_rate": 100.0
+  },
+  "performance": {
+    "profit_factor": Infinity,
+    "average_win": 162.38,
+    "average_loss": 0,
+    "largest_win": 162.38,
+    "largest_loss": 0,
+    "risk_reward_ratio": 0,
+    "roi_percent": 0.16
+  },
+  "capital_evolution": {
+    "initial_capital": 100000.0,
+    "final_capital": 100162.38,
+    "net_profit": 162.38
+  }
+}
