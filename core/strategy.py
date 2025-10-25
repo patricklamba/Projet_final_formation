@@ -65,8 +65,19 @@ class MultiSignalStrategy:
         
         for indicator_name, indicator in self.indicators.items():
             if INDICATOR_CONFIG[indicator_name]['enabled']:
-                df_processed = indicator.calculate(df_processed)
+                # Calculer l'indicateur sur le DataFrame actuel
+                df_with_indicator = indicator.calculate(df_processed)
                 
+                # Ajouter seulement les nouvelles colonnes de cet indicateur
+                new_columns = [col for col in df_with_indicator.columns 
+                            if col not in df_processed.columns]
+                
+                for col in new_columns:
+                    df_processed[col] = df_with_indicator[col]
+        
+        # Supprimer les lignes avec NaN (période de warmup des indicateurs)
+        df_processed = df_processed.dropna()
+        
         return df_processed
     
     def execute_strategy(self, df: pd.DataFrame, symbol: str) -> List[Dict]:
@@ -230,9 +241,7 @@ class MultiSignalStrategy:
         }
         
         self.closed_trades.append(closed_trade)
-        self.money_management.update_capital(
-            self.money_management.current_capital + pnl_corrected  # ← UTILISER pnl_corrected
-        )
+        self.money_management.add_pnl(pnl_corrected)
         
         result = "🟢 PROFIT" if pnl_corrected > 0 else "🔴 PERTE"
         print(f"{result} | CLOSE {trade['direction']} | P&L: {pnl_corrected:+.2f}€ | "

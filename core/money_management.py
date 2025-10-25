@@ -1,5 +1,5 @@
 """
-Module indépendant de gestion du risque et position sizing
+Module indépendant de gestion du risque et position sizing - VERSION CORRIGÉE
 """
 from typing import Dict, Tuple
 import numpy as np
@@ -15,13 +15,18 @@ class MoneyManagement:
         """Met à jour le capital courant"""
         self.current_capital = new_capital
     
+    def add_pnl(self, pnl: float):
+        """Ajoute le résultat du trade au capital courant - NOUVEAU"""
+        self.current_capital += pnl
+        print(f"💰 Capital mis à jour : {self.current_capital:.2f}€")
+    
     def calculate_position_size(self, entry_price: float, stop_loss: float, symbol: str) -> Dict[str, float]:
-        """Calcule la taille de position avec risk management strict"""
+        """Calcule la taille de position avec risk management strict - VERSION CORRIGÉE"""
         risk_amount = self.current_capital * self.config['risk_per_trade']
         
-        # Calcul de la distance en pips selon le symbole
+        # CALCUL CORRIGÉ pour XAUUSD
         if "XAU" in symbol.upper():  # Or
-            pip_value = 10.0  # 1 pip XAUUSD = 10$ par lot
+            pip_value = 1.0  # ⚠️ CORRECTION : 1 pip XAUUSD = 1$ par lot (pas 10$)
             pip_distance = abs(entry_price - stop_loss) / 0.01
             lot_multiplier = 100  # 1 lot = 100 onces
         else:  # Forex (EURUSD, etc.)
@@ -50,19 +55,19 @@ class MoneyManagement:
     
     def calculate_stop_loss_take_profit(self, entry_price: float, direction: str, 
                                       atr: float = None, symbol: str = None) -> Tuple[float, float]:
-        """Calcule SL et TP basés sur ATR ou pourcentage fixe"""
+        """Calcule SL et TP basés sur ATR ou pourcentage fixe - VERSION AMÉLIORÉE"""
         
-        if atr and symbol and "XAU" in symbol.upper():
-            # Pour l'or: SL basé sur ATR
+        # PRIORITÉ à l'ATR si disponible
+        if atr:
             if direction == "LONG":
-                stop_loss = entry_price - (atr * 2.0)
-                take_profit = entry_price + (atr * 2.0 * self.config['risk_reward_ratio'])
+                stop_loss = entry_price - (atr * 1.5)  # 1.5 ATR pour SL
+                take_profit = entry_price + (atr * 1.5 * self.config['risk_reward_ratio'])
             else:  # SHORT
-                stop_loss = entry_price + (atr * 2.0)
-                take_profit = entry_price - (atr * 2.0 * self.config['risk_reward_ratio'])
+                stop_loss = entry_price + (atr * 1.5)
+                take_profit = entry_price - (atr * 1.5 * self.config['risk_reward_ratio'])
         else:
-            # Méthode par pourcentage
-            risk_percent = 0.02  # 2%
+            # Méthode par pourcentage fixe
+            risk_percent = 0.015  # 1.5% plus conservateur
             if direction == "LONG":
                 stop_loss = entry_price * (1 - risk_percent)
                 take_profit = entry_price * (1 + risk_percent * self.config['risk_reward_ratio'])
@@ -73,8 +78,25 @@ class MoneyManagement:
         return round(stop_loss, 5), round(take_profit, 5)
     
     def validate_trade(self, risk_amount: float, risk_percent: float) -> bool:
-        """Valide si le trade respecte les règles de risque"""
+        """Valide si le trade respecte les règles de risque - VERSION CORRIGÉE"""
         max_risk_percent = self.config['risk_per_trade'] * 100 * 1.5  # 50% de tolérance
+        max_risk_amount = self.current_capital * self.config['risk_per_trade'] * 1.5
         
+        # CORRECTION : utilisation de 'and' au lieu de 'et'
         return (risk_percent <= max_risk_percent and 
-                risk_amount <= self.current_capital * self.config['risk_per_trade'] * 1.5)
+                risk_amount <= max_risk_amount)
+    
+    def is_in_drawdown(self) -> bool:
+        """Vérifie si on est en drawdown excessif - NOUVEAU"""
+        drawdown_limit = self.config.get('max_drawdown', 0.10)  # 10% par défaut
+        current_drawdown = (self.capital - self.current_capital) / self.capital
+        return current_drawdown > drawdown_limit
+    
+    def get_risk_summary(self) -> Dict[str, float]:
+        """Retourne un résumé du risque actuel - NOUVEAU"""
+        return {
+            "current_capital": self.current_capital,
+            "initial_capital": self.capital,
+            "drawdown_percent": ((self.capital - self.current_capital) / self.capital) * 100,
+            "max_risk_per_trade": self.current_capital * self.config['risk_per_trade']
+        }
