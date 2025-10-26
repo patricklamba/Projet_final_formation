@@ -6,9 +6,13 @@ CONFIGURATION CENTRALE COMPLÈTE
 # Dans INDICATOR_CONFIG - MODIFIER COMME ÇA :
 INDICATOR_CONFIG = {
     "bollinger_bands": {
-        "enabled": True,        # ✅ ACTIVÉ
+        "enabled": True,
         "weight": 1.2,
-        "params": {"period": 20, "std_dev": 2.0}
+        "params": {
+            "period": 20, 
+            "std_dev": 2.0,
+            "strategy_type": "breakout"  # ← NOUVEAU PARAMÈTRE
+        }
     },
     "keltner_channel": {
         "enabled": True,        # ✅ ACTIVÉ  
@@ -48,7 +52,7 @@ STRATEGY_CONFIG = {
     "risk_management": {
         "initial_capital": 100000.0,
         "risk_per_trade": 0.01,  # 1% du capital
-        "risk_reward_ratio": 1.5,
+        "risk_reward_ratio": 2.0,
         "max_open_trades": 3,
         "max_drawdown": 0.10,  # 10% max
         "min_risk_percent": 0.3,

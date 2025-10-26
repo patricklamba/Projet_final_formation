@@ -1,0 +1,28 @@
+{
+  "symbol": "XAUUSD",
+  "timestamp": "2025-10-25 23:46:12",
+  "summary": {
+    "net_profit": -2462.54,
+    "gross_profit": 3363.61,
+    "gross_loss": -5826.15,
+    "total_trades": 9,
+    "winning_trades": 2,
+    "losing_trades": 7,
+    "breakeven_trades": 0,
+    "win_rate": 22.2
+  },
+  "performance": {
+    "profit_factor": 0.58,
+    "average_win": 1681.8,
+    "average_loss": -832.31,
+    "largest_win": 1846.21,
+    "largest_loss": -928.8,
+    "risk_reward_ratio": 2.02,
+    "roi_percent": -2.46
+  },
+  "capital_evolution": {
+    "initial_capital": 100000.0,
+    "final_capital": 97537.46,
+    "net_profit": -2462.54
+  }
+}

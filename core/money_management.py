@@ -21,30 +21,27 @@ class MoneyManagement:
         print(f"💰 Capital mis à jour : {self.current_capital:.2f}€")
     
     def calculate_position_size(self, entry_price: float, stop_loss: float, symbol: str) -> Dict[str, float]:
-        """Calcule la taille de position avec risk management strict - VERSION CORRIGÉE"""
         risk_amount = self.current_capital * self.config['risk_per_trade']
         
-        # CALCUL CORRIGÉ pour XAUUSD
-        if "XAU" in symbol.upper():  # Or
-            pip_value = 1.0  # ⚠️ CORRECTION : 1 pip XAUUSD = 1$ par lot (pas 10$)
+        if "XAU" in symbol.upper():
+            pip_value = 1.0
             pip_distance = abs(entry_price - stop_loss) / 0.01
-            lot_multiplier = 100  # 1 lot = 100 onces
-        else:  # Forex (EURUSD, etc.)
-            pip_value = 10.0  # 1 pip EURUSD = 10$ par lot
+            lot_multiplier = 10  # ⚠️ CORRECTION : 10 au lieu de 100 !
+        else:
+            pip_value = 10.0
             pip_distance = abs(entry_price - stop_loss) / 0.0001
-            lot_multiplier = 100000  # 1 lot = 100,000 unités
+            lot_multiplier = 10000  # Ajusté aussi pour Forex
         
         if pip_distance == 0:
             return {"lots": 0, "risk_amount": 0, "units": 0, "risk_percent": 0}
         
-        # Calcul des lots
         lots = risk_amount / (pip_distance * pip_value)
-        lots = round(max(0.01, min(lots, 1.0)), 2)  # Limite entre 0.01 et 1.0 lots
+        lots = round(max(0.01, min(lots, 0.3)), 2)  # Max 0.3 lots
         
-        # Risk réel
+        units = lots * lot_multiplier  # ← MAINTENANT CORRECT
+        
         actual_risk = pip_distance * pip_value * lots
         risk_percent = (actual_risk / self.current_capital) * 100
-        units = lots * lot_multiplier  
         
         return {
             "lots": lots,
@@ -60,11 +57,11 @@ class MoneyManagement:
         # PRIORITÉ à l'ATR si disponible
         if atr:
             if direction == "LONG":
-                stop_loss = entry_price - (atr * 1.5)  # 1.5 ATR pour SL
-                take_profit = entry_price + (atr * 1.5 * self.config['risk_reward_ratio'])
+                stop_loss = entry_price - (atr * 2.0)  # 1.5 ATR pour SL
+                take_profit = entry_price + (atr * 2.0 * self.config['risk_reward_ratio'])
             else:  # SHORT
-                stop_loss = entry_price + (atr * 1.5)
-                take_profit = entry_price - (atr * 1.5 * self.config['risk_reward_ratio'])
+                stop_loss = entry_price + (atr * 2.0)
+                take_profit = entry_price - (atr * 2.0 * self.config['risk_reward_ratio'])
         else:
             # Méthode par pourcentage fixe
             risk_percent = 0.015  # 1.5% plus conservateur

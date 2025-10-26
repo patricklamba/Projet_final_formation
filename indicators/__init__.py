@@ -22,3 +22,10 @@ __all__ = [
     'Fibonacci',
     'CandlestickPatterns'
 ]
+
+try:
+    from stock_indicators import indicators
+    STOCK_INDICATORS_AVAILABLE = True
+except ImportError:
+    STOCK_INDICATORS_AVAILABLE = False
+    print("⚠️  StockIndicators non installé. Utilisez: pip install stock-indicators")
