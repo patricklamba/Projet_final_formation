@@ -1,78 +1,109 @@
-"""
-Test spécifique pour vérifier la correction de Keltner Channel
-"""
-import pandas as pd
-import numpy as np
-import sys
-import os
+# test_keltner_fixed.py
+def test_keltner_alignment_with_missing_dates():
+    """
+    Test robuste de l'alignement temporel avec données manquantes.
+    Version corrigée du bug d'indexation.
+    """
+    import pandas as pd
+    import numpy as np
+    from datetime import datetime, timedelta
+    from indicators.keltner_channel import KeltnerChannel
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-def test_keltner_fixed():
-    """Test que Keltner Channel retourne bien un DataFrame"""
-    print("🧪 TEST CORRECTION KELTNER CHANNEL")
-    print("=" * 50)
+    print("🧪 TEST ALIGNEMENT TEMPOREL AVEC DONNÉES MANQUANTES (CORRIGÉ)")
+    print("=" * 70)
+    
+    # --- 1️⃣ Création de données avec trous temporels réalistes ---
+    dates = [datetime(2023, 1, 1) + timedelta(days=i) for i in range(30)]
+    dates.pop(5)   # Simule un weekend
+    dates.pop(10)  # Simule un jour férié  
+    dates.pop(15)  # Simule des données manquantes
+    
+    np.random.seed(42)
+    df = pd.DataFrame({
+        "open": 100 + np.cumsum(np.random.randn(len(dates)) * 0.5),
+        "high": 100 + np.cumsum(np.random.randn(len(dates)) * 0.5) + 1.0,
+        "low": 100 + np.cumsum(np.random.randn(len(dates)) * 0.5) - 1.0,
+        "close": 100 + np.cumsum(np.random.randn(len(dates)) * 0.5),
+    }, index=pd.to_datetime(dates))
+    
+    print(f"📊 Données d'entrée: {len(df)} bougies avec {30 - len(df)} jours manquants")
+    print(f"📅 Période: {df.index.min()} à {df.index.max()}")
+    print(f"🔍 Type d'index: {type(df.index)}")
+    print(f"🔍 Exemple d'index: {df.index[:3].tolist()}")
+    
+    # --- 2️⃣ Test avec fill_missing=True ---
+    print("\n🔧 TEST 1: Mode fill_missing=True")
+    kc_fill = KeltnerChannel(ema_period=10, atr_period=5, verbose=True, fill_missing=True)
     
     try:
-        from indicators.keltner_channel import KeltnerChannel
+        out_fill = kc_fill.calculate(df)
+        print("✅ Calcul réussi sans erreur d'indexation")
         
-        # Créer des données de test
-        dates = pd.date_range(start='2024-01-01', periods=100, freq='1H')
-        df = pd.DataFrame({
-            'open': np.random.randn(100).cumsum() + 100,
-            'high': np.random.randn(100).cumsum() + 102,
-            'low': np.random.randn(100).cumsum() + 98,
-            'close': np.random.randn(100).cumsum() + 100,
-            'volume': np.random.randint(1000, 10000, 100)
-        }, index=dates)
+        # Vérifications de base
+        assert "kc_middle" in out_fill.columns, "❌ Colonne kc_middle manquante"
+        assert len(out_fill) == len(df), f"❌ Taille différente: {len(out_fill)} vs {len(df)}"
+        assert out_fill.index.is_monotonic_increasing, "❌ Index non monotone"
         
-        print("📊 Données de test créées")
+        calculated_values = out_fill["kc_middle"].notna().sum()
+        print(f"✅ {calculated_values}/{len(out_fill)} valeurs calculées")
         
-        # Test Keltner Channel
-        kc = KeltnerChannel()
-        result = kc.calculate(df)
-        
-        # Vérifier que c'est un DataFrame
-        if isinstance(result, pd.DataFrame):
-            print("✅ KeltnerChannel retourne un DataFrame")
-            
-            # Vérifier les colonnes ajoutées
-            kc_columns = [col for col in result.columns if 'kc_' in col]
-            print(f"✅ Colonnes Keltner: {kc_columns}")
-            
-            # Vérifier les signaux
-            signals = []
-            for i in range(20, min(50, len(result))):
-                signal = kc.get_signal(result, i)
-                if signal != 0:
-                    signals.append((i, signal))
-            
-            print(f"✅ Signaux générés: {len(signals)}")
-            
-            if signals:
-                print("\n📊 Exemples de signaux:")
-                for i, (idx, signal) in enumerate(signals[:3]):
-                    direction = "HAUSSIER" if signal > 0 else "BAISSIER"
-                    strength = "FORT" if abs(signal) == 1 else "FAIBLE"
-                    print(f"   Bougie {idx}: {direction} ({strength})")
-            
-            # Test d'intégration avec Bollinger
-            from indicators.bollinger_bands import BollingerBands
-            bb = BollingerBands()
-            df_with_bb = bb.calculate(df)
-            df_with_both = kc.calculate(df_with_bb)
-            
-            print(f"\n🔗 Intégration BB + KC réussie!")
-            print(f"   Colonnes totales: {len(df_with_both.columns)}")
-            print(f"   Forme du DataFrame: {df_with_both.shape}")
-            
-        else:
-            print(f"❌ KeltnerChannel retourne {type(result)} au lieu de DataFrame")
-            
     except Exception as e:
-        print(f"❌ ERREUR: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"❌ Erreur lors du calcul: {e}")
+        return False
+    
+    # --- 3️⃣ Test avec fill_missing=False ---
+    print("\n🔧 TEST 2: Mode fill_missing=False")
+    kc_no_fill = KeltnerChannel(ema_period=10, atr_period=5, verbose=True, fill_missing=False)
+    
+    try:
+        out_no_fill = kc_no_fill.calculate(df)
+        print("✅ Calcul réussi sans erreur d'indexation")
+        
+        assert len(out_no_fill) <= len(df), "❌ Taille inattendue"
+        assert out_no_fill["kc_middle"].notna().all(), "❌ NaN résiduels"
+        assert out_no_fill.index.is_monotonic_increasing, "❌ Index non monotone"
+        
+        print(f"✅ Mode no-fill: {len(out_no_fill)} lignes après nettoyage")
+        
+    except Exception as e:
+        print(f"❌ Erreur lors du calcul: {e}")
+        return False
+    
+    # --- 4️⃣ Vérification de la cohérence ---
+    print("\n🔧 TEST 3: Cohérence des résultats")
+    
+    common_dates = out_fill.index.intersection(out_no_fill.index)
+    if len(common_dates) > 0:
+        fill_common = out_fill.loc[common_dates, "kc_middle"]
+        no_fill_common = out_no_fill.loc[common_dates, "kc_middle"]
+        
+        # Vérifier l'égalité des valeurs (tolérance pour les erreurs d'arrondi)
+        diff = (fill_common - no_fill_common).abs().max()
+        assert diff < 1e-10, f"❌ Différence trop grande: {diff}"
+        print(f"✅ {len(common_dates)} dates communes - valeurs identiques")
+    
+    # --- 5️⃣ Vérifications finales ---
+    print("\n🔧 TEST 4: Vérifications finales")
+    
+    # Relations mathématiques
+    assert (out_no_fill["kc_upper"] > out_no_fill["kc_lower"]).all(), "❌ Canal inversé"
+    assert (out_no_fill["kc_position"] >= 0).all() and (out_no_fill["kc_position"] <= 1).all(), "❌ kc_position hors limites"
+    
+    print("✅ Toutes les vérifications passées")
+    
+    # --- 6️⃣ Résumé ---
+    print("\n📊 RÉSULTATS FINAUX:")
+    print(f"   • Données d'entrée: {len(df)} bougies")
+    print(f"   • Mode fill_missing=True: {len(out_fill)} bougies, {out_fill['kc_middle'].notna().sum()} calculées")
+    print(f"   • Mode fill_missing=False: {len(out_no_fill)} bougies, {out_no_fill['kc_middle'].notna().sum()} calculées")
+    print(f"   • Dates communes: {len(common_dates)}")
+    
+    print("\n🔍 ÉCHANTILLON FINAL:")
+    print(out_no_fill[['close', 'kc_middle', 'kc_upper', 'kc_lower', 'kc_position']].tail())
+    
+    print("\n🎉 TEST D'ALIGNEMENT RÉUSSI !")
+    return True
 
+# Exécution du test
 if __name__ == "__main__":
-    test_keltner_fixed()
+    test_keltner_alignment_with_missing_dates()

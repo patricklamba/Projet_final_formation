@@ -14,10 +14,18 @@ INDICATOR_CONFIG = {
             "strategy_type": "breakout"  # ← NOUVEAU PARAMÈTRE
         }
     },
-    "keltner_channel": {
-        "enabled": True,        # ✅ ACTIVÉ  
+     "keltner_channel": {
+        "enabled": True,
         "weight": 1.2,
-        "params": {"ema_period": 20, "atr_period": 10, "atr_multiplier": 1.5}
+        "params": {
+            "ema_period": 20,
+            "atr_period": 10, 
+            "atr_multiplier": 2.0,
+            "breakout_tolerance": 0.001,
+            "confirmation_candles": 1,
+            "verbose": False,      # Production
+            "fill_missing": False  # Backtesting (True pour charting)
+        }
     },
     "ema": {
         "enabled": False,       # ❌ DÉSACTIVÉ
